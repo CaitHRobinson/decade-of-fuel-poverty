@@ -1,5 +1,5 @@
 # A decade of fuel poverty indicators in England: Spatio-temporal analysis
-We use sequence and cluster analysis to identify key spatial trajectories in fuel poverty based on definitions and indicators used in national policy in England. 
+We use sequence and cluster analysis to identify key spatial trajectories in fuel poverty based on definitions and indicators used in national policy in England. The full code to replicate the analysis and outputs in R is available [here](https://github.com/CaitHRobinson/decade-of-fuel-poverty/blob/main/TenYears.Rmd).
 
 ### Datasets
 Datasets: We analyse sub-regional fuel poverty indicators from 2010 - 2020. In order to analyse sequences within fuel poverty data over time, it was necessary to transform the data into a categorical, rather than continuous dataset. This allowed for analysis of how Local Authorities move through different states over time. Relative deciles were selected as an appropriate categorical classification for the dataset, classifying Local Authorities into deciles (i.e. the top 10%, top 10% etc.) for each year between 2010-2019. 
