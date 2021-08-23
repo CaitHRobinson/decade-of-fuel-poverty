@@ -7,7 +7,7 @@ Datasets: We analyse sub-regional fuel poverty indicators from 2010 - 2020. In o
 ### Methods
 *Sequence analysis:* We use the TraMineR package in R, a useful package for mining and visualising sequences of states (Gabadinho et al. 2011). We then compute optimal matching (OM) distances. Optimal matching generates distances based on the minimal cost (in terms of insertions, deletions, and substitutions) of transforming one sequence into another (Abbott and Forrest, 1986; Needleman and Winsch, 1970; Gabadinho et al. 2011). In the analysis that follows, we use an insertion and deletion cost of one, the default value in TraMineR… justify.
 
-
+![10years](https://user-images.githubusercontent.com/57355504/130454920-5925f9e2-5958-401c-bc13-c679678e1831.png)
 
 *Cluster analysis:* Once the temporal sequences are derived, clustering is applied to aggregate the sequences into a reduced number of groups. Using the cluster library in R (reference), we build a Ward hierarchical clustering of the sequences from the optimal matching distances, retrieving a cluster member for every individual sequence according to a three, four, five, six, seven, eight and nine class solution. 
 
