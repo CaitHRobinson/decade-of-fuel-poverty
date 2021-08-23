@@ -237,18 +237,23 @@ tiff("Cluster8_500.tiff", width = 4000, height = 4000, res=500)
 seqdplot(LA_seq, group = cl8.lab, border = NA, rows = 3, cols = 3)
 dev.off()
 ```
+
+# Add additional Census variables for context
 ```{r}
 LA_additional_variables <- read.csv("LA_variables.csv", check.names=FALSE, fileEncoding = 'UTF-8-BOM')
 LA_finaldataset <- merge(LA_data_deciles, LA_additional_variables, by.x=c("LACode"), by.y=c("geography code"))
 ```
-
+# Check and change type of variable
 ```{r}
 str(LA_finaldataset)
 
 LA_finaldataset$clustering5 <- as.character(LA_finaldataset$clustering5)
 str(LA_finaldataset)
+```
 
- # Unpaid Care
+# Create violin plot for unpaid care
+
+```{r}
 p1 <- ggplot(LA_finaldataset, aes(x=clustering5, y = UnpaidCare_person_per))+ 
   geom_violin(aes(fill=clustering5), color=NA)+
   labs(title="Unpaid care",y="Percentage of persons", x="", caption = "")+
@@ -258,8 +263,10 @@ p1 <- ggplot(LA_finaldataset, aes(x=clustering5, y = UnpaidCare_person_per))+
                     labels=c("1", "2", "3", "4", "5"))+
   stat_summary(fun.y=median, geom="point", size=2, color="black")+ 
   theme(legend.position = "none", plot.title = element_text(size=10), axis.title.y=element_text(size=10)) 
+```
 
 # Private rent
+```{r}
 h1 <- ggplot(LA_finaldataset, aes(x=clustering5, y = PrivateRent_hh_per))+ 
   geom_violin(aes(fill=clustering5), color=NA)+
   labs(title="Private renting",y="Percentage of households", x="", caption = "")+
@@ -269,8 +276,10 @@ h1 <- ggplot(LA_finaldataset, aes(x=clustering5, y = PrivateRent_hh_per))+
                     labels=c("1", "2", "3", "4", "5"))+
   stat_summary(fun.y=median, geom="point", size=2, color="black")+ 
   theme(legend.position = "none", plot.title = element_text(size=10), axis.title.y=element_text(size=10))
+```
 
 # Social rent
+```{r}
 h2 <- ggplot(LA_finaldataset, aes(x=clustering5, y = SocialRent_hh_per))+ 
   geom_violin(aes(fill=clustering5), color=NA)+
   labs(title="Social renting",y="", x="Clusters", caption = "")+
@@ -280,8 +289,10 @@ h2 <- ggplot(LA_finaldataset, aes(x=clustering5, y = SocialRent_hh_per))+
                     labels=c("1", "2", "3", "4", "5"))+
   stat_summary(fun.y=median, geom="point", size=2, color="black")+ 
   theme(legend.position = "none", plot.title = element_text(size=10), axis.title.x=element_text(size=10))
+```
 
 # Ethnicity
+```{r}
 p2 <- ggplot(LA_finaldataset, aes(x=clustering5, y = Ethnicity_per))+ 
   geom_violin(aes(fill=clustering5), color=NA)+
   labs(title="Ethnic minority", x="", y = "", caption = "")+
@@ -291,8 +302,10 @@ p2 <- ggplot(LA_finaldataset, aes(x=clustering5, y = Ethnicity_per))+
                     labels=c("1", "2", "3", "4", "5"))+
   stat_summary(fun.y=median, geom="point", size=2, color="black")+ 
   theme(legend.position = "none", plot.title = element_text(size=10)) 
+```
 
 # Deprivaton
+```{r}
 h3 <- ggplot(LA_finaldataset, aes(x=clustering5, y = Deprivation_hh_per))+ 
   geom_violin(aes(fill=clustering5), color=NA)+
   labs(title="Deprivation",y="", x="", caption = "")+
@@ -302,8 +315,10 @@ h3 <- ggplot(LA_finaldataset, aes(x=clustering5, y = Deprivation_hh_per))+
                     labels=c("1", "2", "3", "4", "5"))+
   stat_summary(fun.y=median, geom="point", size=2, color="black")+ 
   theme(legend.position = "none", plot.title = element_text(size=10))
+```
 
 # No central heating
+```{r}
 h4 <- ggplot(LA_finaldataset, aes(x=clustering5, y = NoCentralHeating_per_hh))+ 
   geom_violin(aes(fill=clustering5), color=NA)+
   labs(title="No central heating",y="Percentage of households", x="Clusters", caption = "")+
@@ -312,8 +327,10 @@ h4 <- ggplot(LA_finaldataset, aes(x=clustering5, y = NoCentralHeating_per_hh))+
                     breaks=c("1", "2", "3", "4", "5"),
                     labels=c("1", "2", "3", "4", "5"))+
   stat_summary(fun.y=median, geom="point", size=2, color="black")
+```
 
 # Dasability or illness
+```{r}
 p3 <- ggplot(LA_finaldataset, aes(x=clustering5, y = LimitedAlot_person_per))+ 
   geom_violin(aes(fill=clustering5), color=NA)+
   labs(title="Daily activities limited a lot", x = "", y="", caption = "")+
@@ -323,7 +340,10 @@ p3 <- ggplot(LA_finaldataset, aes(x=clustering5, y = LimitedAlot_person_per))+
                     labels=c("1", "2", "3", "4", "5"))+
   stat_summary(fun.y=median, geom="point", size=2, color="black")+ 
   theme(legend.position = "none", plot.title = element_text(size=10))
+```
 
+# Plot multiple graphs on same plot
+```{r}
 tiff("Grid_Variables_Clusters_400.tiff", width = 4000, height = 3000, res=400)
 grid.arrange(p1, p2, p3, h1, h2, h3,  nrow = 2)
 dev.off()
