@@ -1,6 +1,6 @@
-# Install relevant packages and libraries
+#### Install relevant packages and libraries
 
-```{r}
+```{r, message = FALSE, warning=FALSE}
 library(ggplot2)
 library(tidyr)
 library(RColorBrewer)
@@ -9,31 +9,38 @@ library(cluster)
 library(dplyr)
 library(gridExtra)
 library(WeightedCluster)
+library(sf)
+library(tmap)
 ```
-# Read data as csv.
 
-```{r}
-LA_data <- read.csv("FP_LA_Data_Percent.csv", check.names=FALSE, fileEncoding = 'UTF-8-BOM')
-LA_data
-```
+#### Explore the data
+
+Local Authorities were selected, as sub-regional fuel poverty estimates are understood to be reliable at this scale, allowing for comparison between particular areas (unlike estimates at LSOA scale). 
+
+```{r, message = FALSE, results='hide'}
+# Read data as csv
+LA_data <- read.csv("fuelpoverty_data.csv", check.names=FALSE, fileEncoding = 'UTF-8-BOM')
+
 # Convert data into long format
-
-```{r}
 LA_data_long <- gather(LA_data, key="Year", value="FP_households", c(4:13))
-head(LA_data_long)
-```
 
 # Make sure that R recognises the year format as a date
+LA_data_long$Year<-lubridate::ymd(LA_data_long$Year, truncated = 2L)
+```
 
 ```{r}
-LA_data_long$Year<-lubridate::ymd(LA_data_long$Year, truncated = 2L)
 head(LA_data_long)
 ```
 
-# Compute a relative rank / decile for each fuel poor households for each year
+Once the data is prepared, we can compute a *relative rank or decile* for each fuel poor households for each year. This allowed for analysis of how Local Authorities move through different states over time. Relative deciles were selected as an appropriate categorical classification for the dataset, classifying Local Authorities into deciles (i.e. the top 10%, top 10% etc.) for each year between 2010-2019. 
 
-```{r}
+Relative ranks can then be used to create a *state sequence object*. We use the TraMineR package in R, a useful package for mining and visualising sequences of states (Gabadinho et al. 2011). 
+
+```{r, message = FALSE, results='hide'}
+# Find out the names of the columns in the dataset
 colnames(LA_data)
+
+# Compute relative rank for each year of data
 LA_data_deciles = mutate(LA_data, x2010 = ntile(LA_data$"2010", 10), 
                                   x2011 = ntile(LA_data$"2011", 10), 
                                   x2012 = ntile(LA_data$"2012", 10), 
@@ -44,257 +51,100 @@ LA_data_deciles = mutate(LA_data, x2010 = ntile(LA_data$"2010", 10),
                                   x2017 = ntile(LA_data$"2017", 10), 
                                   x2018 = ntile(LA_data$"2018", 10),
                                   x2019 = ntile(LA_data$"2019", 10))
-LA_data_deciles
-```
-# Specify the stages of the sequence that we are interested in, i.e. deciles (1-10)
 
-```{r}
-data_alpha <- c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10") # Create list of states
-```
+# Create a list of states
+data_alpha <- c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10")
 
-# Create a state sequence object from the fuel poverty variables (x2010 - x2019)
-
-```{r}
+# Create a state sequence object from the fuel poverty variables 
 LA_seq <- seqdef(LA_data_deciles, 14:23, ststep=NULL, alphabet=data_alpha) # Alphabet is the list of states
 ```
 
-# Caluculate transition rate
-
 ```{r}
-LA_seq_tr <- seqsubm(LA_seq, method = "TRATE", time.varying = TRUE)
-tr_rates <- round(LA_seq_tr, 2)
-tr_rates
-
-write.csv(tr_rates, "tr_rates.csv") 
-```
-
-
 # Set the colour palette according to the sequence
-
-```{r}
 cpal(LA_seq) <- c("#313695", "#4575b4", "#74add1", "#abd9e9", 
                   "#e0f3f8", "#fee090", "#fdae61", "#f46d43", "#d73027", "#a50026")
-```
 
-```{r}
+# The sequence data can then be plotted, both from the start and from the end.  
 seqIplot(LA_seq, sortv = "from.start", with.legend = FALSE)
 seqfplot(LA_seq, border = NA, with.legend = FALSE)
-seqlegend(LA_seq)
-
-tiff("AllSequences_400.tiff", width = 4000, height = 3000, res=400)
-seqIplot(LA_seq, sortv = "from.start", with.legend = FALSE)
-dev.off()
-
-tiff("AllSequences_fromend_400.tiff", width = 4000, height = 3000, res=400)
-seqIplot(LA_seq, sortv = "from.end", with.legend = FALSE)
-dev.off()
-
-tiff("MostFreq_Sequences_400.tiff", width = 4000, height = 3000, res=400)
-seqfplot(LA_seq, border = NA, with.legend = FALSE)
-dev.off()
-
-tiff("Legend_600.tiff", res=600)
-seqlegend(LA_seq)
-dev.off()
 ```
-# Compute distance between sequences (i.e. dissimilarities)
-# Computes pairwise dissimilarities between sequences or dissimilarity from a reference sequence. Several dissimilarity measures can be chosen, including optimal matching (OM) and many of its variants, distance based on the count of common attributes, and distances between sequence state distributions. 
-## We opt for DHD method (dynamic Hamming). This approach reflects important differences, oir distinct timings, within sequences. In our case, the fuel poverty indicator changes across time. The DHD has a strong time sensitivity, allowing substitution costs to depend on the position t in the sequence. See [Studer (2016)](https://rss.onlinelibrary.wiley.com/doi/pdf/10.1111/rssa.12125).
 
-```{r, echo = F, results = 'hide', error = FALSE, warning = FALSE, message = FALSE}
+#### Compute distance between sequences (i.e. dissimilarities)
+
+We can then compute pairwise dissimilarities between sequences, or the dissimilarity from a reference sequence. It is necessary to chose between several dissimilarity measures, including optimal matching (OM) and many of its variants, distance based on the count of common attributes, and distances between sequence state distributions. 
+
+We opt for *DHD method* (Dynamic Hamming). This approach reflects important differences, or distinct timings, within sequences. In our case, the fuel poverty indicator changes across time. The DHD has a strong time sensitivity, allowing substitution costs to depend on the position **t** in the sequence. See [Studer (2016)](https://rss.onlinelibrary.wiley.com/doi/pdf/10.1111/rssa.12125).
+
+```{r, message = FALSE, results='hide'}
 LA_DHD <- seqdist(LA_seq, method = "DHD")
 ```
 
+#### PAM ward clustering
+
+Once the temporal sequences are derived, clustering is applied to aggregate the sequences into a reduced number of groups. We opt for a PAM ward hierarchical clustering approach. This provides a more detailed cluster analysis as each cluster has the chance to be redivided (http://www.ijfcc.org/vol5/434-S059.pdf). 
+
+```{r, message = FALSE, results='hide'}
 # PAM ward clustering
-## PAM from k-solution of heirarchical clustering
-## More detailed clustering analysis as each cluster has the chance to be [redivided](http://www.ijfcc.org/vol5/434-S059.pdf)
-
-```{r}
-pamwardcluster3 <- wcKMedoids(LA_DHD, k = 3)
-unique(pamwardcluster3$clustering)
-cl3.lab <- factor(pamwardcluster3$clustering, labels = paste("Cluster", 1:3))
-
-pamwardcluster4 <- wcKMedoids(LA_DHD, k = 4)
-unique(pamwardcluster4$clustering)
-cl4.lab <- factor(pamwardcluster4$clustering, labels = paste("Cluster", 1:4))
-
 pamwardcluster5 <- wcKMedoids(LA_DHD, k = 5)
 unique(pamwardcluster5$clustering)
-cl5.lab <- factor(pamwardcluster5$clustering, labels = paste("Cluster", 1:5))
 
-pamwardcluster6 <- wcKMedoids(LA_DHD, k = 6)
-unique(pamwardcluster3$clustering)
-cl6.lab <- factor(pamwardcluster6$clustering, labels = paste("Cluster", 1:6))
+# Rename labels with cluster names
+cl5.lab <- factor(pamwardcluster5$clustering, labels = paste(c("Sustained energy affluence", "Fluctuating energy affluence", "Changeable middle", "Fluctuating energy deprivation", "Entrenched energy deprivation")))
 
-pamwardcluster7 <- wcKMedoids(LA_DHD, k = 7)
-unique(pamwardcluster7$clustering)
-cl7.lab <- factor(pamwardcluster7$clustering, labels = paste("Cluster", 1:7))
-
-pamwardcluster8 <- wcKMedoids(LA_DHD, k = 8)
-unique(pamwardcluster8$clustering)
-cl8.lab <- factor(pamwardcluster8$clustering, labels = paste("Cluster", 1:8))
-```
-# Create csv. with appropriately labelled cluster columns
-
-```{r}
-LA_data_deciles$Cluster_3 <- factor(pamwardcluster3$clustering, labels = paste(1:3))
-
-LA_data_deciles$Cluster_4 <- factor(pamwardcluster4$clustering, labels = paste(1:4))
-
+# Change labels in csv file
 LA_data_deciles$Cluster_5 <- factor(pamwardcluster5$clustering, labels = paste(1:5))
 
-LA_data_deciles$Cluster_6 <- factor(pamwardcluster6$clustering, labels = paste(1:6))
-
-LA_data_deciles$Cluster_7 <- factor(pamwardcluster7$clustering, labels = paste(1:7))
-
-LA_data_deciles$Cluster_8 <- factor(pamwardcluster8$clustering, labels = paste(1:8))
-
+# Write results to csv.
 write.csv(LA_data_deciles, "data_deciles.csv") 
 ```
 
-# Visualise cluster patterns
+```{r}
+head(LA_data_deciles)
+```
 
+```{r, message = FALSE, results='hide', warning = FALSE}
 # State distribution plots
-## See: http://traminer.unige.ch/doc/seqplot.html
+seqdplot(LA_seq, group = cl5.lab, border = NA, rows = 3, cols = 3)
 
-```{r}
-seqdplot(LA_seq, group = cl4.lab, border = NA, rows = 3, cols = 3)
-seqdplot(LA_seq,group = cl5.lab, border = NA, rows = 3, cols = 3)
-seqdplot(LA_seq, group = cl6.lab, border = NA, rows = 3, cols = 3)
-seqdplot(LA_seq, group = cl7.lab, border = NA, rows = 3, cols = 3)
-seqdplot(LA_seq, group = cl8.lab, border = NA, rows = 3, cols = 3)
-
-tiff("Cluster4_500.tiff", width = 4000, height = 4000, res=500)
-seqdplot(LA_seq, group = cl4.lab, border = NA, rows = 3, cols = 3)
-dev.off()
-
-```
 # Sequence frequency plots
-
-```{r}
-seqfplot(LA_seq, group = cl4.lab, border = NA, rows = 3, cols = 3)
 seqfplot(LA_seq,group = cl5.lab, border = NA, rows = 3, cols = 3)
-seqfplot(LA_seq, group = cl6.lab, border = NA, rows = 3, cols = 3)
-seqfplot(LA_seq, group = cl7.lab, border = NA, rows = 3, cols = 3)
-seqfplot(LA_seq, group = cl8.lab, border = NA, rows = 3, cols = 3)
-
-tiff("Cluster8_f_500.tiff", width = 4000, height = 4000, res=500)
-seqfplot(LA_seq, group = cl8.lab, border = NA, rows = 3, cols = 3)
-dev.off()
-```
 
 # Transversal entropy plots
-
-```{r}
-seqHtplot(LA_seq, group = cl4.lab, border = NA, rows = 3, cols = 3)
 seqHtplot(LA_seq,group = cl5.lab, border = NA, rows = 3, cols = 3)
-seqHtplot(LA_seq, group = cl6.lab, border = NA, rows = 3, cols = 3)
-seqHtplot(LA_seq, group = cl7.lab, border = NA, rows = 3, cols = 3)
-seqHtplot(LA_seq, group = cl8.lab, border = NA, rows = 3, cols = 3)
-
-tiff("Cluster8_Ht_500.tiff", width = 4000, height = 4000, res=500)
-seqHtplot(LA_seq, group = cl8.lab, border = NA, rows = 3, cols = 3)
-dev.off()
-```
 
 # Mean times plots
-
-```{r}
-seqmtplot(LA_seq, group = cl4.lab, border = NA, rows = 3, cols = 3)
 seqmtplot(LA_seq,group = cl5.lab, border = NA, rows = 3, cols = 3)
-seqmtplot(LA_seq, group = cl6.lab, border = NA, rows = 3, cols = 3)
-seqmtplot(LA_seq, group = cl7.lab, border = NA, rows = 3, cols = 3)
-seqmtplot(LA_seq, group = cl8.lab, border = NA, rows = 3, cols = 3)
-
-tiff("Cluster5_mt_500.tiff", width = 4000, height = 4000, res=500)
-seqmtplot(LA_seq,group = cl5.lab, border = NA, rows = 3, cols = 3)
-dev.off()
-```
 
 # Whole set index plots
-
-```{r}
-seqIplot(LA_seq, group = cl4.lab, border = NA, rows = 3, cols = 3)
 seqIplot(LA_seq,group = cl5.lab, border = NA, rows = 3, cols = 3)
-seqIplot(LA_seq, group = cl6.lab, border = NA, rows = 3, cols = 3)
-seqIplot(LA_seq, group = cl7.lab, border = NA, rows = 3, cols = 3)
-seqIplot(LA_seq, group = cl8.lab, border = NA, rows = 3, cols = 3)
-
-tiff("Cluster5_I_500.tiff", width = 4000, height = 4000, res=500)
-seqIplot(LA_seq, group = cl5.lab, border = NA, rows = 3, cols = 3)
-dev.off()
-```
 
 # Individual sequences
-## Plots the first ten rows of the sequence object. 
-
-```{r}
-seqiplot(LA_seq, group = cl4.lab, border = NA, rows = 3, cols = 3)
 seqiplot(LA_seq,group = cl5.lab, border = NA, rows = 3, cols = 3)
-seqiplot(LA_seq, group = cl6.lab, border = NA, rows = 3, cols = 3)
-seqiplot(LA_seq, group = cl7.lab, border = NA, rows = 3, cols = 3)
-seqiplot(LA_seq, group = cl8.lab, border = NA, rows = 3, cols = 3)
-
-tiff("Cluster8_i_500.tiff", width = 4000, height = 4000, res=500)
-seqiplot(LA_seq, group = cl8.lab, border = NA, rows = 3, cols = 3)
-dev.off()
-```
 
 # Parallel coordinate plots
-
-```{r}
-seqpcplot(LA_seq, group = cl4.lab, border = NA, rows = 3, cols = 3)
 seqpcplot(LA_seq,group = cl5.lab, border = NA, rows = 3, cols = 3)
-seqpcplot(LA_seq, group = cl6.lab, border = NA, rows = 3, cols = 3)
-seqpcplot(LA_seq, group = cl7.lab, border = NA, rows = 3, cols = 3)
-seqpcplot(LA_seq, group = cl8.lab, border = NA, rows = 3, cols = 3)
-```
+
 # Modal state sequences
-
-```{r}
-seqmsplot(LA_seq, group = cl4.lab, border = NA, rows = 3, cols = 3)
 seqmsplot(LA_seq,group = cl5.lab, border = NA, rows = 3, cols = 3)
-seqmsplot(LA_seq, group = cl6.lab, border = NA, rows = 3, cols = 3)
-seqmsplot(LA_seq, group = cl7.lab, border = NA, rows = 3, cols = 3)
-seqmsplot(LA_seq, group = cl8.lab, border = NA, rows = 3, cols = 3)
-
-tiff("Cluster8_ms_500.tiff", width = 4000, height = 4000, res=500)
-seqmsplot(LA_seq, group = cl8.lab, border = NA, rows = 3, cols = 3)
-dev.off()
 ```
 
-# Export as an image
+#### Working with contextual census variables
 
-```{r}
-tiff("Cluster8_500.tiff", width = 4000, height = 4000, res=500)
-seqdplot(LA_seq, group = cl8.lab, border = NA, rows = 3, cols = 3)
-dev.off()
-```
-
-# Add contextual census variables
-
-```{r}
+```{r, message = FALSE, results='hide'}
+# Add additional variables
 LA_additional_variables <- read.csv("LA_variables.csv", check.names=FALSE, fileEncoding = 'UTF-8-BOM')
-```
 
-## Merge with trajectories dataset
-
-```{r}
+# Merge with trajectories dataset
 LA_finaldataset <- merge(LA_data_deciles, LA_additional_variables, by.x=c("LACode"), by.y=c("geography code"))
-```
 
-## Change cluster data to character
-
-```{r}
+# Change cluster data to character
 LA_finaldataset$Cluster_5 <- as.character(LA_finaldataset$Cluster_5)
 ```
 
-## Create violin plots and use grid.arrange to plot in single figure
-
-```{r}
+```{r, message = FALSE, results='hide', warning=FALSE}
  # Unpaid Care
-p1 <- ggplot(LA_finaldataset, aes(x=clustering5, y = UnpaidCare_person_per))+ 
-  geom_violin(aes(fill=clustering5), color=NA)+
+p1 <- ggplot(LA_finaldataset, aes(x=Cluster_5, y = UnpaidCare_person_per))+ 
+  geom_violin(aes(fill=Cluster_5), color=NA)+
   labs(title="Unpaid care",y="Percentage of persons", x="", caption = "")+
   scale_fill_manual(values=c("#440154", "#3a528b", "#20908d","#5dc962", "#fde725"), 
                     name="Cluster",
@@ -304,8 +154,8 @@ p1 <- ggplot(LA_finaldataset, aes(x=clustering5, y = UnpaidCare_person_per))+
   theme(legend.position = "none", plot.title = element_text(size=10), axis.title.y=element_text(size=10)) 
 
 # Private rent
-h1 <- ggplot(LA_finaldataset, aes(x=clustering5, y = PrivateRent_hh_per))+ 
-  geom_violin(aes(fill=clustering5), color=NA)+
+h1 <- ggplot(LA_finaldataset, aes(x=Cluster_5, y = PrivateRent_hh_per))+ 
+  geom_violin(aes(fill=Cluster_5), color=NA)+
   labs(title="Private renting",y="Percentage of households", x="", caption = "")+
   scale_fill_manual(values=c("#440154", "#3a528b", "#20908d","#5dc962", "#fde725"), 
                     name="Cluster",
@@ -315,8 +165,8 @@ h1 <- ggplot(LA_finaldataset, aes(x=clustering5, y = PrivateRent_hh_per))+
   theme(legend.position = "none", plot.title = element_text(size=10), axis.title.y=element_text(size=10))
 
 # Social rent
-h2 <- ggplot(LA_finaldataset, aes(x=clustering5, y = SocialRent_hh_per))+ 
-  geom_violin(aes(fill=clustering5), color=NA)+
+h2 <- ggplot(LA_finaldataset, aes(x=Cluster_5, y = SocialRent_hh_per))+ 
+  geom_violin(aes(fill=Cluster_5), color=NA)+
   labs(title="Social renting",y="", x="Clusters", caption = "")+
   scale_fill_manual(values=c("#440154", "#3a528b", "#20908d","#5dc962", "#fde725"), 
                     name="Cluster",
@@ -326,8 +176,8 @@ h2 <- ggplot(LA_finaldataset, aes(x=clustering5, y = SocialRent_hh_per))+
   theme(legend.position = "none", plot.title = element_text(size=10), axis.title.x=element_text(size=10))
 
 # Ethnicity
-p2 <- ggplot(LA_finaldataset, aes(x=clustering5, y = Ethnicity_per))+ 
-  geom_violin(aes(fill=clustering5), color=NA)+
+p2 <- ggplot(LA_finaldataset, aes(x=Cluster_5, y = Ethnicity_per))+ 
+  geom_violin(aes(fill=Cluster_5), color=NA)+
   labs(title="Ethnic minority", x="", y = "", caption = "")+
   scale_fill_manual(values=c("#440154", "#3a528b", "#20908d","#5dc962", "#fde725"), 
                     name="Cluster",
@@ -337,8 +187,8 @@ p2 <- ggplot(LA_finaldataset, aes(x=clustering5, y = Ethnicity_per))+
   theme(legend.position = "none", plot.title = element_text(size=10)) 
 
 # Deprivaton
-h3 <- ggplot(LA_finaldataset, aes(x=clustering5, y = Deprivation_hh_per))+ 
-  geom_violin(aes(fill=clustering5), color=NA)+
+h3 <- ggplot(LA_finaldataset, aes(x=Cluster_5, y = Deprivation_hh_per))+ 
+  geom_violin(aes(fill=Cluster_5), color=NA)+
   labs(title="Deprivation",y="", x="", caption = "")+
   scale_fill_manual(values=c("#440154", "#3a528b", "#20908d","#5dc962", "#fde725"), 
                     name="Cluster",
@@ -348,8 +198,8 @@ h3 <- ggplot(LA_finaldataset, aes(x=clustering5, y = Deprivation_hh_per))+
   theme(legend.position = "none", plot.title = element_text(size=10))
 
 # No central heating
-h4 <- ggplot(LA_finaldataset, aes(x=clustering5, y = NoCentralHeating_per_hh))+ 
-  geom_violin(aes(fill=clustering5), color=NA)+
+h4 <- ggplot(LA_finaldataset, aes(x=Cluster_5, y = NoCentralHeating_per_hh))+ 
+  geom_violin(aes(fill=Cluster_5), color=NA)+
   labs(title="No central heating",y="Percentage of households", x="Clusters", caption = "")+
   scale_fill_manual(values=c("#440154", "#3a528b", "#20908d","#5dc962", "#fde725"), 
                     name="Cluster",
@@ -358,8 +208,8 @@ h4 <- ggplot(LA_finaldataset, aes(x=clustering5, y = NoCentralHeating_per_hh))+
   stat_summary(fun.y=median, geom="point", size=2, color="black")
 
 # Disability or illness
-p3 <- ggplot(LA_finaldataset, aes(x=clustering5, y = LimitedAlot_person_per))+ 
-  geom_violin(aes(fill=clustering5), color=NA)+
+p3 <- ggplot(LA_finaldataset, aes(x=Cluster_5, y = LimitedAlot_person_per))+ 
+  geom_violin(aes(fill=Cluster_5), color=NA)+
   labs(title="Daily activities limited a lot", x = "", y="", caption = "")+
   scale_fill_manual(values=c("#440154", "#3a528b", "#20908d","#5dc962", "#fde725"), 
                     name="Cluster",
@@ -368,7 +218,47 @@ p3 <- ggplot(LA_finaldataset, aes(x=clustering5, y = LimitedAlot_person_per))+
   stat_summary(fun.y=median, geom="point", size=2, color="black")+ 
   theme(legend.position = "none", plot.title = element_text(size=10))
 
-tiff("Grid_Variables_Clusters_400.tiff", width = 4000, height = 3000, res=400)
+# Final grid image
 grid.arrange(p1, p2, p3, h1, h2, h3,  nrow = 2)
-dev.off()
+```
+
+#### Plots of raw ful poverty data according to cluster
+
+```{r, message = FALSE, results='hide'}
+# Gather raw fuel poverty data
+LA_data_cluster_long <- gather(LA_finaldataset, key="Year", value="FP_households", c(4:13))
+head(LA_data_cluster_long)
+```
+
+```{r, message = FALSE, results='hide'}
+# Use only every second label on x axis
+everysecond <- function(x){
+  x <- sort(unique(x))
+  x[seq(2, length(x), 2)] <- ""
+  x
+}
+```
+
+```{r, message = FALSE, results='hide'}
+# Plot fuel poverty estimates for each cluster using bins
+bins <- ggplot(LA_data_cluster_long, aes(x=Year, y = FP_households))+ 
+  geom_bin_2d()+
+  labs(x = "", y="Fuel poor households (%)")+
+  facet_wrap(~ Cluster_5)+
+  scale_x_discrete(labels = everysecond(LA_data_cluster_long$Year))+
+  scale_y_continuous()+
+  guides(fill = guide_legend(title = "LA count"))+
+  theme_minimal()
+
+plot(bins)
+```
+
+#### Mapping clusters
+
+```{r message = FALSE}
+# Import LA shapefile
+LA <- st_read("EnglandandWales_LA_2019.shp")
+
+# Merge with cluster attibutes
+LA_clusters <- merge(LA, LA_data_deciles, by.x = "lad19cd", by.y = "LACode")
 ```
