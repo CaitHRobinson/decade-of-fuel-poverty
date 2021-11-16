@@ -7,5 +7,5 @@ We analyse [sub-regional fuel poverty indicators from 2010 - 2019](https://www.g
 ### Raw data
 [LA_variables.csv](https://github.com/CaitHRobinson/decade-of-fuel-poverty/blob/main/LA_variables.csv) includes the LA scale contextual variables (e.g. unpaid care, deprivation etc.) and
 [data_deciles.csv](https://github.com/CaitHRobinson/decade-of-fuel-poverty/blob/main/data_deciles.csv) includes the raw fuel poverty data (as a percentage) followed by a decile classification for each year.
-[LA_finaldataset](https://github.com/CaitHRobinson/decade-of-fuel-poverty/blob/main/LA_finaldataset.csv) includes all variables, fuel poverty data and the cluster assigned.
+[LA_finaldataset.csv](https://github.com/CaitHRobinson/decade-of-fuel-poverty/blob/main/LA_finaldataset.csv) includes all variables, fuel poverty data and the cluster assigned.
 
