@@ -1,3 +1,6 @@
+This code builds on a range of extremely useful resources for implementing sequence analysis using TraMineR, in particular [Gabadinho et al. (2011)](http://traminer.unige.ch/documentation.shtml) and [Nikos et al. (2019)](https://github.com/patnik/neighbourhood_change).
+
+
 #### Install relevant packages and libraries
 
 ```{r, message = FALSE, warning=FALSE}
