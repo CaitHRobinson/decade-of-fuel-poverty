@@ -4,7 +4,6 @@ In particular [Gabadinho et al. (2011)](http://traminer.unige.ch/documentation.s
 
 #### Install relevant packages and libraries
 
-```{r, message = FALSE, warning=FALSE}
 library(ggplot2)
 library(tidyr)
 library(RColorBrewer)
@@ -15,13 +14,11 @@ library(gridExtra)
 library(WeightedCluster)
 library(sf)
 library(tmap)
-```
 
 #### Explore the data
 
 Local Authorities were selected, as sub-regional fuel poverty estimates are understood to be reliable at this scale, allowing for comparison between particular areas (unlike estimates at LSOA scale). 
 
-```{r, message = FALSE, results='hide'}
 # Read data as csv
 LA_data <- read.csv("fuelpoverty_data.csv", check.names=FALSE, fileEncoding = 'UTF-8-BOM')
 
@@ -30,17 +27,13 @@ LA_data_long <- gather(LA_data, key="Year", value="FP_households", c(4:13))
 
 # Make sure that R recognises the year format as a date
 LA_data_long$Year<-lubridate::ymd(LA_data_long$Year, truncated = 2L)
-```
 
-```{r}
 head(LA_data_long)
-```
 
 Once the data is prepared, we can compute a *relative rank or decile* for each fuel poor households for each year. This allowed for analysis of how Local Authorities move through different states over time. Relative deciles were selected as an appropriate categorical classification for the dataset, classifying Local Authorities into deciles (i.e. the top 10%, top 10% etc.) for each year between 2010-2019. 
 
 Relative ranks can then be used to create a *state sequence object*. We use the TraMineR package in R, a useful package for mining and visualising sequences of states (Gabadinho et al. 2011). 
 
-```{r, message = FALSE, results='hide'}
 # Find out the names of the columns in the dataset
 colnames(LA_data)
 
@@ -61,9 +54,7 @@ data_alpha <- c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10")
 
 # Create a state sequence object from the fuel poverty variables 
 LA_seq <- seqdef(LA_data_deciles, 14:23, ststep=NULL, alphabet=data_alpha) # Alphabet is the list of states
-```
 
-```{r}
 # Set the colour palette according to the sequence
 cpal(LA_seq) <- c("#313695", "#4575b4", "#74add1", "#abd9e9", 
                   "#e0f3f8", "#fee090", "#fdae61", "#f46d43", "#d73027", "#a50026")
@@ -71,7 +62,6 @@ cpal(LA_seq) <- c("#313695", "#4575b4", "#74add1", "#abd9e9",
 # The sequence data can then be plotted, both from the start and from the end.  
 seqIplot(LA_seq, sortv = "from.start", with.legend = FALSE)
 seqfplot(LA_seq, border = NA, with.legend = FALSE)
-```
 
 #### Compute distance between sequences (i.e. dissimilarities)
 
@@ -79,15 +69,12 @@ We can then compute pairwise dissimilarities between sequences, or the dissimila
 
 We opt for *DHD method* (Dynamic Hamming). This approach reflects important differences, or distinct timings, within sequences. In our case, the fuel poverty indicator changes across time. The DHD has a strong time sensitivity, allowing substitution costs to depend on the position **t** in the sequence. See [Studer (2016)](https://rss.onlinelibrary.wiley.com/doi/pdf/10.1111/rssa.12125).
 
-```{r, message = FALSE, results='hide'}
 LA_DHD <- seqdist(LA_seq, method = "DHD")
-```
 
 #### PAM ward clustering
 
 Once the temporal sequences are derived, clustering is applied to aggregate the sequences into a reduced number of groups. We opt for a PAM ward hierarchical clustering approach. This provides a more detailed cluster analysis as each cluster has the chance to be redivided (http://www.ijfcc.org/vol5/434-S059.pdf). 
 
-```{r, message = FALSE, results='hide'}
 # PAM ward clustering
 pamwardcluster5 <- wcKMedoids(LA_DHD, k = 5)
 unique(pamwardcluster5$clustering)
@@ -100,13 +87,8 @@ LA_data_deciles$Cluster_5 <- factor(pamwardcluster5$clustering, labels = paste(1
 
 # Write results to csv.
 write.csv(LA_data_deciles, "data_deciles.csv") 
-```
-
-```{r}
 head(LA_data_deciles)
-```
 
-```{r, message = FALSE, results='hide', warning = FALSE}
 # State distribution plots
 seqdplot(LA_seq, group = cl5.lab, border = NA, rows = 3, cols = 3)
 
@@ -130,11 +112,9 @@ seqpcplot(LA_seq,group = cl5.lab, border = NA, rows = 3, cols = 3)
 
 # Modal state sequences
 seqmsplot(LA_seq,group = cl5.lab, border = NA, rows = 3, cols = 3)
-```
 
 #### Working with contextual census variables
 
-```{r, message = FALSE, results='hide'}
 # Add additional variables
 LA_additional_variables <- read.csv("LA_variables.csv", check.names=FALSE, fileEncoding = 'UTF-8-BOM')
 
@@ -143,9 +123,7 @@ LA_finaldataset <- merge(LA_data_deciles, LA_additional_variables, by.x=c("LACod
 
 # Change cluster data to character
 LA_finaldataset$Cluster_5 <- as.character(LA_finaldataset$Cluster_5)
-```
 
-```{r, message = FALSE, results='hide', warning=FALSE}
  # Unpaid Care
 p1 <- ggplot(LA_finaldataset, aes(x=Cluster_5, y = UnpaidCare_person_per))+ 
   geom_violin(aes(fill=Cluster_5), color=NA)+
@@ -224,26 +202,20 @@ p3 <- ggplot(LA_finaldataset, aes(x=Cluster_5, y = LimitedAlot_person_per))+
 
 # Final grid image
 grid.arrange(p1, p2, p3, h1, h2, h3,  nrow = 2)
-```
 
 #### Plots of raw ful poverty data according to cluster
 
-```{r, message = FALSE, results='hide'}
 # Gather raw fuel poverty data
 LA_data_cluster_long <- gather(LA_finaldataset, key="Year", value="FP_households", c(4:13))
 head(LA_data_cluster_long)
-```
 
-```{r, message = FALSE, results='hide'}
 # Use only every second label on x axis
 everysecond <- function(x){
   x <- sort(unique(x))
   x[seq(2, length(x), 2)] <- ""
   x
 }
-```
 
-```{r, message = FALSE, results='hide'}
 # Plot fuel poverty estimates for each cluster using bins
 bins <- ggplot(LA_data_cluster_long, aes(x=Year, y = FP_households))+ 
   geom_bin_2d()+
@@ -255,14 +227,19 @@ bins <- ggplot(LA_data_cluster_long, aes(x=Year, y = FP_households))+
   theme_minimal()
 
 plot(bins)
-```
 
 #### Mapping clusters
-
-```{r message = FALSE}
 # Import LA shapefile
 LA <- st_read("EnglandandWales_LA_2019.shp")
 
 # Merge with cluster attibutes
 LA_clusters <- merge(LA, LA_data_deciles, by.x = "lad19cd", by.y = "LACode")
-```
+
+# Map clusters using tmap functions
+Clusters_mapped <- tm_shape(LA)+
+  tm_fill(col = "grey87")+ # Provide grey outline without borders of England and Wales
+  tm_shape(LA_clusters)+
+  tm_polygons(col = "Cluster_5", palette =c("1" ="#440154", "2" ="#3a528b", "3"= "#20908d", "4" = "#5dc962", "5" = "#fde725"), title = "Trajectory clusters")+
+  tm_scale_bar(text.size = 0.6)+
+  tm_layout(frame = FALSE, legend.title.fontface = "bold")
+Clusters_mapped
