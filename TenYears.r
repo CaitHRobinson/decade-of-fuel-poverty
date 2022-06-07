@@ -1,6 +1,5 @@
-This code builds on a range of extremely useful resources for implementing sequence analysis using TraMineR.
-In particular [Gabadinho et al. (2011)](http://traminer.unige.ch/documentation.shtml) and [Nikos et al. (2019)](https://github.com/patnik/neighbourhood_change).
-
+# This code builds on a range of extremely useful resources for implementing sequence analysis using TraMineR.
+# In particular [Gabadinho et al. (2011)](http://traminer.unige.ch/documentation.shtml) and [Nikos et al. (2019)](https://github.com/patnik/neighbourhood_change).
 
 #### Install relevant packages and libraries
 
@@ -65,9 +64,11 @@ seqfplot(LA_seq, border = NA, with.legend = FALSE)
 
 #### Compute distance between sequences (i.e. dissimilarities)
 
-We can then compute pairwise dissimilarities between sequences, or the dissimilarity from a reference sequence. It is necessary to chose between several dissimilarity measures, including optimal matching (OM) and many of its variants, distance based on the count of common attributes, and distances between sequence state distributions. 
-
-We opt for *DHD method* (Dynamic Hamming). This approach reflects important differences, or distinct timings, within sequences. In our case, the fuel poverty indicator changes across time. The DHD has a strong time sensitivity, allowing substitution costs to depend on the position **t** in the sequence. See [Studer (2016)](https://rss.onlinelibrary.wiley.com/doi/pdf/10.1111/rssa.12125).
+# We can then compute pairwise dissimilarities between sequences, or the dissimilarity from a reference sequence. 
+# It is necessary to chose between several dissimilarity measures, including optimal matching (OM) and many of its variants, distance based on the count of common attributes, and distances between sequence state distributions. 
+# We opt for *DHD method* (Dynamic Hamming). This approach reflects important differences, or distinct timings, within sequences. 
+# In our case, the fuel poverty indicator changes across time. The DHD has a strong time sensitivity, allowing substitution costs to depend on the position **t** in the sequence. 
+# See [Studer (2016)](https://rss.onlinelibrary.wiley.com/doi/pdf/10.1111/rssa.12125).
 
 LA_DHD <- seqdist(LA_seq, method = "DHD")
 
@@ -124,7 +125,7 @@ LA_finaldataset <- merge(LA_data_deciles, LA_additional_variables, by.x=c("LACod
 # Change cluster data to character
 LA_finaldataset$Cluster_5 <- as.character(LA_finaldataset$Cluster_5)
 
- # Unpaid Care
+# Unpaid Care
 p1 <- ggplot(LA_finaldataset, aes(x=Cluster_5, y = UnpaidCare_person_per))+ 
   geom_violin(aes(fill=Cluster_5), color=NA)+
   labs(title="Unpaid care",y="Percentage of persons", x="", caption = "")+
