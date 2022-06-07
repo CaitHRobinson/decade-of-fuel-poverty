@@ -29,9 +29,10 @@ LA_data_long$Year<-lubridate::ymd(LA_data_long$Year, truncated = 2L)
 
 head(LA_data_long)
 
-Once the data is prepared, we can compute a *relative rank or decile* for each fuel poor households for each year. This allowed for analysis of how Local Authorities move through different states over time. Relative deciles were selected as an appropriate categorical classification for the dataset, classifying Local Authorities into deciles (i.e. the top 10%, top 10% etc.) for each year between 2010-2019. 
-
-Relative ranks can then be used to create a *state sequence object*. We use the TraMineR package in R, a useful package for mining and visualising sequences of states (Gabadinho et al. 2011). 
+# Once the data is prepared, we can compute a *relative rank or decile* for each fuel poor households for each year. 
+# This allowed for analysis of how Local Authorities move through different states over time. Relative deciles were selected as an appropriate categorical classification for the dataset, classifying Local Authorities into deciles (i.e. the top 10%, top 10% etc.) for each year between 2010-2019. 
+# Relative ranks can then be used to create a *state sequence object*. 
+# We use the TraMineR package in R, a useful package for mining and visualising sequences of states (Gabadinho et al. 2011). 
 
 # Find out the names of the columns in the dataset
 colnames(LA_data)
