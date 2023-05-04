@@ -9,3 +9,4 @@ We analyse [sub-regional fuel poverty indicators from 2010 - 2019](https://www.g
 [data_deciles.csv](https://github.com/CaitHRobinson/decade-of-fuel-poverty/blob/main/data_deciles.csv) includes the raw fuel poverty data (as a percentage) followed by a decile classification for each year.
 [LA_finaldataset.csv](https://github.com/CaitHRobinson/decade-of-fuel-poverty/blob/main/LA_finaldataset.csv) includes all variables, fuel poverty data and the cluster assigned.
 
+![Figure4](https://user-images.githubusercontent.com/57355504/236171816-9dc00146-a4b8-42c9-b550-4332aab349fd.jpeg)
