@@ -8,7 +8,7 @@
 
 *Transforming data:* To analyse sequences within fuel poverty data over time, it is necessary to transform the data into a categorical, rather than continuous dataset. Relative deciles are selected as an appropriate categorical classification for the dataset, classifying Local Authorities into deciles (i.e. the top 10%, top 10% etc.) for each year between 2010-2019. The [raw fuel poverty data](https://github.com/CaitHRobinson/decade-of-fuel-poverty/blob/main/data_deciles.csv) is available (as a percentage) followed by a decile classification for each year.
 
-*Other contextual data:* [LA_variables.csv](https://github.com/CaitHRobinson/decade-of-fuel-poverty/blob/main/LA_variables.csv) includes the LA scale contextual variables (e.g. unpaid care, deprivation etc.).
+*Other contextual data:* We use a range of LA scale [contextual variables]((https://github.com/CaitHRobinson/decade-of-fuel-poverty/blob/main/LA_variables.csv)) (e.g. unpaid care, deprivation etc.).
 
 📊 **Dataset download:** The final classification of Local Authorities and the clusters assigned is available [here](https://github.com/CaitHRobinson/decade-of-fuel-poverty/blob/main/LA_finaldataset.csv).
 
