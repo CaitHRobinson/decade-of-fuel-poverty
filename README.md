@@ -2,7 +2,7 @@
 
 💬 **Language:** R
 
-** Section summary:** Sequence and cluster analysis used to identify key spatial trajectories in fuel poverty based on definitions and indicators used in national policy in England. The full code to replicate the analysis and outputs in R is available [here](https://github.com/CaitHRobinson/decade-of-fuel-poverty/blob/main/TenYears.Rmd).
+📌 **Section summary:** Sequence and cluster analysis used to identify key spatial trajectories in fuel poverty based on definitions and indicators used in national policy in England. The full code to replicate the analysis and outputs in R is available [here](https://github.com/CaitHRobinson/decade-of-fuel-poverty/blob/main/TenYears.Rmd).
 
 **Fuel poverty indicators:* We analyse [sub-regional fuel poverty indicators from 2010 - 2019](https://www.gov.uk/government/collections/fuel-poverty-sub-regional-statistics). 
 
